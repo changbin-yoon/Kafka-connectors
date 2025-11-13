@@ -1,0 +1,20 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: mssql-sink-connector
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-connect-cluster
+spec:
+  class: com.kafka.connectors.mssql.MssqlSinkConnector
+  tasksMax: 2
+  topics: source-topic
+  config:
+    connection.url: "jdbc:sqlserver://mssql-service:1433;databaseName=kafka_db"
+    connection.user: "kafka_user"
+    connection.password: "kafka_password"  # Secret 사용 권장
+    table.name: "kafka_messages"
+    batch.size: "100"
+    max.retries: "3"
+    retry.backoff.ms: "1000"
+

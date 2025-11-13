@@ -1,0 +1,15 @@
+apiVersion: v2
+name: kafka-connectors
+description: Kafka Connect Sink Connectors for MSSQL and S3
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - kafka
+  - connect
+  - strimzi
+  - mssql
+  - s3
+maintainers:
+  - name: Kafka Connectors Team
+

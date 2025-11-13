@@ -1,0 +1,19 @@
+FROM quay.io/strimzi/kafka:0.48.0-kafka-4.0.0
+
+USER root:root
+
+# MSSQL JDBC 드라이버 설치
+RUN mkdir -p /opt/kafka/plugins/mssql-sink-connector && \
+    cd /tmp && \
+    curl -L -o /opt/kafka/plugins/mssql-sink-connector/mssql-jdbc.jar \
+    https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/12.4.2.jre11/mssql-jdbc-12.4.2.jre11.jar
+
+# 커넥터 JAR 파일 복사
+COPY mssql-sink-connector/target/mssql-sink-connector-1.0.0.jar /opt/kafka/plugins/mssql-sink-connector/
+
+# 권한 설정
+RUN chown -R 1001:0 /opt/kafka/plugins && \
+    chmod -R 755 /opt/kafka/plugins
+
+USER 1001
+

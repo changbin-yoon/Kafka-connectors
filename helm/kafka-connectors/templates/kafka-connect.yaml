@@ -1,0 +1,59 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: {{ .Values.kafkaConnect.name }}
+  namespace: {{ .Values.kafkaConnect.namespace }}
+  labels:
+    app: kafka-connect
+    version: {{ .Values.kafkaConnect.image.tag }}
+spec:
+  replicas: {{ .Values.kafkaConnect.replicas }}
+  image: {{ .Values.kafkaConnect.image.repository }}:{{ .Values.kafkaConnect.image.tag }}
+  bootstrapServers: {{ .Values.kafkaConnect.bootstrapServers | default "my-cluster-kafka-bootstrap:9092" }}
+  
+  {{- if .Values.kafkaConnect.resources }}
+  resources:
+    requests:
+      memory: {{ .Values.kafkaConnect.resources.requests.memory }}
+      cpu: {{ .Values.kafkaConnect.resources.requests.cpu }}
+    limits:
+      memory: {{ .Values.kafkaConnect.resources.limits.memory }}
+      cpu: {{ .Values.kafkaConnect.resources.limits.cpu }}
+  {{- end }}
+  
+  {{- if .Values.kafkaConnect.jvmOptions }}
+  jvmOptions:
+    {{- range .Values.kafkaConnect.jvmOptions }}
+    -Xms: {{ . }}
+    {{- end }}
+  {{- end }}
+  
+  {{- if .Values.kafkaConnect.logging }}
+  logging:
+    type: {{ .Values.kafkaConnect.logging.type }}
+    loggers:
+      {{- range $key, $value := .Values.kafkaConnect.logging.loggers }}
+      {{ $key }}: {{ $value }}
+      {{- end }}
+  {{- end }}
+  
+  {{- if .Values.kafkaConnect.metrics }}
+  metricsConfig:
+    type: {{ .Values.kafkaConnect.metrics.type }}
+    valueFrom:
+      configMapKeyRef:
+        name: {{ .Values.kafkaConnect.metrics.valueFrom.configMapKeyRef.name }}
+        key: {{ .Values.kafkaConnect.metrics.valueFrom.configMapKeyRef.key }}
+  {{- end }}
+  
+  config:
+    group.id: connect-cluster
+    offset.storage.topic: connect-cluster-offsets
+    config.storage.topic: connect-cluster-configs
+    status.storage.topic: connect-cluster-status
+    offset.flush.interval.ms: 10000
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+

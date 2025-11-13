@@ -1,0 +1,16 @@
+FROM quay.io/strimzi/kafka:0.48.0-kafka-4.0.0
+
+USER root:root
+
+# AWS SDK는 이미 포함되어 있을 수 있지만, 필요한 경우 추가 설치
+# 커넥터 JAR 파일 복사
+RUN mkdir -p /opt/kafka/plugins/s3-sink-connector
+
+COPY s3-sink-connector/target/s3-sink-connector-1.0.0.jar /opt/kafka/plugins/s3-sink-connector/
+
+# 권한 설정
+RUN chown -R 1001:0 /opt/kafka/plugins && \
+    chmod -R 755 /opt/kafka/plugins
+
+USER 1001
+

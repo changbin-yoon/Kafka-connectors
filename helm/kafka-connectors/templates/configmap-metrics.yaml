@@ -1,0 +1,20 @@
+{{- if .Values.kafkaConnect.metrics.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-connect-metrics
+  namespace: {{ .Values.kafkaConnect.namespace }}
+data:
+  metrics-config.yml: |
+    rules:
+      - pattern: "kafka.connect<type=connect-worker-metrics><>([a-z-]+)"
+        name: "kafka_connect_worker_$1"
+        type: GAUGE
+      - pattern: "kafka.connect<type=connect-worker-metrics, connector=([a-z-]+)><>([a-z-]+)"
+        name: "kafka_connect_connector_$1_$2"
+        type: GAUGE
+      - pattern: "kafka.connect<type=connect-worker-metrics, connector=([a-z-]+), task=([0-9]+)><>([a-z-]+)"
+        name: "kafka_connect_task_$1_$2_$3"
+        type: GAUGE
+{{- end }}
+

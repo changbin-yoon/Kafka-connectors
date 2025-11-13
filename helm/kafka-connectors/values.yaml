@@ -1,0 +1,107 @@
+# Kafka Connect 설정
+kafkaConnect:
+  name: kafka-connect-cluster
+  namespace: kafka
+  replicas: 2
+  
+  # 이미지 설정
+  image:
+    repository: mssql-sink-connector
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  # 리소스 설정
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  
+  # JVM 설정
+  jvmOptions:
+    -Xms: "256m"
+    -Xmx: "512m"
+  
+  # 로깅 설정
+  logging:
+    type: inline
+    loggers:
+      rootLogger.level: "INFO"
+  
+  # 메트릭 설정
+  metrics:
+    enabled: true
+    type: jmxPrometheusExporter
+    valueFrom:
+      configMapKeyRef:
+        name: kafka-connect-metrics
+        key: metrics-config.yml
+
+# MSSQL Sink Connector 설정
+mssqlSink:
+  enabled: true
+  name: mssql-sink-connector
+  connector:
+    class: com.kafka.connectors.mssql.MssqlSinkConnector
+    tasksMax: 2
+    topics: "source-topic"
+    config:
+      connection.url: "jdbc:sqlserver://mssql-service:1433;databaseName=kafka_db"
+      connection.user: "kafka_user"
+      connection.password: "kafka_password"
+      table.name: "kafka_messages"
+      batch.size: "100"
+      max.retries: "3"
+      retry.backoff.ms: "1000"
+
+# S3 Sink Connector 설정
+s3Sink:
+  enabled: true
+  name: s3-sink-connector
+  connector:
+    class: com.kafka.connectors.s3.S3SinkConnector
+    tasksMax: 2
+    topics: "source-topic"
+    config:
+      s3.bucket: "kafka-data-bucket"
+      s3.region: "ap-northeast-2"
+      s3.prefix: "kafka-data"
+      aws.access.key.id: "YOUR_ACCESS_KEY"
+      aws.secret.access.key: "YOUR_SECRET_KEY"
+      flush.size: "1000"
+      rotate.interval.ms: "3600000"
+      file.format: "json"
+      compression.type: "gzip"
+
+# Secret 설정
+secrets:
+  mssql:
+    enabled: true
+    name: mssql-credentials
+    data:
+      connection.password: ""  # base64 인코딩된 값
+  s3:
+    enabled: true
+    name: s3-credentials
+    data:
+      aws.access.key.id: ""  # base64 인코딩된 값
+      aws.secret.access.key: ""  # base64 인코딩된 값
+
+# Service 설정
+service:
+  type: ClusterIP
+  port: 8083
+
+# Ingress 설정 (선택사항)
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: kafka-connect.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
