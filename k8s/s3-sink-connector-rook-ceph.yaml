@@ -1,0 +1,25 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: s3-sink-connector-rook-ceph
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka-connect-cluster
+spec:
+  class: com.kafka.connectors.s3.S3SinkConnector
+  tasksMax: 2
+  topics: kafka-data-topic
+  config:
+    s3.bucket: "kafka-data-bucket"
+    s3.region: "us-east-1"
+    s3.endpoint: "http://rook-ceph-rgw-my-store.rook-ceph.svc:80"  # 실제 RGW 서비스 이름으로 변경
+    s3.path.style.access: "true"
+    s3.prefix: "kafka-data"
+    # Secret에서 환경 변수로 주입
+    aws.access.key.id: "${ROOK_CEPH_ACCESS_KEY}"
+    aws.secret.access.key: "${ROOK_CEPH_SECRET_KEY}"
+    flush.size: "1000"
+    rotate.interval.ms: "3600000"
+    file.format: "json"
+    compression.type: "gzip"
+

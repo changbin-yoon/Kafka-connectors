@@ -13,7 +13,10 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import java.net.URI;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,10 +64,25 @@ public class S3SinkTask extends SinkTask {
                 config.awsSecretAccessKey
         );
 
-        s3Client = S3Client.builder()
+        var builder = S3Client.builder()
                 .region(Region.of(config.s3Region))
-                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
-                .build();
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds));
+
+        // Rook-Ceph endpoint 설정
+        if (config.s3Endpoint != null && !config.s3Endpoint.isEmpty()) {
+            builder.endpointOverride(URI.create(config.s3Endpoint));
+            log.info("Using custom S3 endpoint: {}", config.s3Endpoint);
+        }
+
+        // Path-style access 설정 (Rook-Ceph는 일반적으로 path-style 사용)
+        if (config.s3PathStyleAccess) {
+            builder.serviceConfiguration(S3Configuration.builder()
+                    .pathStyleAccessEnabled(true)
+                    .build());
+            log.info("Path-style access enabled");
+        }
+
+        s3Client = builder.build();
 
         log.info("S3 Client initialized for bucket: {} in region: {}", config.s3Bucket, config.s3Region);
     }

@@ -1,0 +1,78 @@
+# Rook-Ceph S3를 사용하는 Kafka Connect 설정
+kafkaConnect:
+  name: kafka-connect-cluster
+  namespace: kafka
+  replicas: 2
+  bootstrapServers: my-cluster-kafka-bootstrap:9092
+  
+  # 이미지 설정
+  image:
+    repository: yoochabi/s3-sink-connector
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  # 리소스 설정
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  
+  # JVM 설정
+  jvmOptions:
+    -Xms: "256m"
+    -Xmx: "512m"
+  
+  # 로깅 설정
+  logging:
+    type: inline
+    loggers:
+      rootLogger.level: "INFO"
+  
+  # 메트릭 설정
+  metrics:
+    enabled: true
+    type: jmxPrometheusExporter
+    valueFrom:
+      configMapKeyRef:
+        name: kafka-connect-metrics
+        key: metrics-config.yml
+
+# S3 Sink Connector 설정 (Rook-Ceph용)
+s3Sink:
+  enabled: true
+  name: s3-sink-connector-rook-ceph
+  connector:
+    class: com.kafka.connectors.s3.S3SinkConnector
+    tasksMax: 2
+    topics: "kafka-data-topic"
+    config:
+      # Rook-Ceph Object Store 설정
+      s3.bucket: "kafka-data-bucket"
+      s3.region: "us-east-1"  # Rook-Ceph는 리전이 없으므로 임의의 값 사용
+      s3.endpoint: "http://rook-ceph-rgw-my-store.rook-ceph.svc:80"  # 실제 RGW 서비스 이름으로 변경
+      s3.path.style.access: "true"  # Rook-Ceph는 path-style 접근 사용
+      s3.prefix: "kafka-data"
+      # 환경 변수에서 자격 증명 가져오기
+      aws.access.key.id: "${ROOK_CEPH_ACCESS_KEY}"
+      aws.secret.access.key: "${ROOK_CEPH_SECRET_KEY}"
+      flush.size: "1000"
+      rotate.interval.ms: "3600000"  # 1시간
+      file.format: "json"
+      compression.type: "gzip"
+
+# Secret 설정
+secrets:
+  s3:
+    enabled: true
+    name: rook-ceph-s3-credentials
+    data:
+      aws.access.key.id: ""  # base64 인코딩된 값 또는 Secret 참조
+      aws.secret.access.key: ""  # base64 인코딩된 값 또는 Secret 참조
+
+# MSSQL Sink Connector는 비활성화
+mssqlSink:
+  enabled: false
+

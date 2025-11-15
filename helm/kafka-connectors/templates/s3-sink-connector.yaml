@@ -13,6 +13,12 @@ spec:
   config:
     s3.bucket: {{ .Values.s3Sink.connector.config.s3.bucket | quote }}
     s3.region: {{ .Values.s3Sink.connector.config.s3.region | quote }}
+    {{- if .Values.s3Sink.connector.config.s3.endpoint }}
+    s3.endpoint: {{ .Values.s3Sink.connector.config.s3.endpoint | quote }}
+    {{- end }}
+    {{- if hasKey .Values.s3Sink.connector.config.s3 "path.style.access" }}
+    s3.path.style.access: {{ .Values.s3Sink.connector.config.s3.path.style.access | quote }}
+    {{- end }}
     s3.prefix: {{ .Values.s3Sink.connector.config.s3.prefix | quote }}
     {{- if .Values.secrets.s3.enabled }}
     aws.access.key.id: ${s3-access-key-id}

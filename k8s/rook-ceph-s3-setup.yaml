@@ -1,0 +1,54 @@
+---
+# Rook-Ceph S3 Object Store 사용자 및 버킷 생성
+# 이 파일은 Rook-Ceph가 이미 배포되어 있다고 가정합니다
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rook-ceph-s3-credentials
+  namespace: kafka
+type: Opaque
+stringData:
+  # Rook-Ceph Object Store에서 생성한 Access Key와 Secret Key를 입력하세요
+  # 아래 명령어로 생성할 수 있습니다:
+  # kubectl exec -n rook-ceph -it rook-ceph-tools-xxx -- radosgw-admin user create --uid=kafka-user --display-name="Kafka User"
+  # kubectl exec -n rook-ceph -it rook-ceph-tools-xxx -- radosgw-admin key create --uid=kafka-user --key-type=s3 --access-key=YOUR_ACCESS_KEY --secret-key=YOUR_SECRET_KEY
+  access-key: "YOUR_ACCESS_KEY"
+  secret-key: "YOUR_SECRET_KEY"
+---
+# Rook-Ceph Object Store 버킷 생성 스크립트 (ConfigMap)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rook-ceph-bucket-setup
+  namespace: kafka
+data:
+  create-bucket.sh: |
+    #!/bin/bash
+    # Rook-Ceph Object Store 버킷 생성 스크립트
+    
+    # Rook-Ceph Object Store 서비스 확인
+    RGW_SERVICE=$(kubectl get svc -n rook-ceph | grep rook-ceph-rgw | awk '{print $1}')
+    RGW_ENDPOINT="http://${RGW_SERVICE}.rook-ceph.svc:80"
+    
+    echo "Rook-Ceph RGW Endpoint: ${RGW_ENDPOINT}"
+    
+    # Access Key와 Secret Key 가져오기
+    ACCESS_KEY=$(kubectl get secret rook-ceph-s3-credentials -n kafka -o jsonpath='{.data.access-key}' | base64 -d)
+    SECRET_KEY=$(kubectl get secret rook-ceph-s3-credentials -n kafka -o jsonpath='{.data.secret-key}' | base64 -d)
+    
+    # AWS CLI를 사용하여 버킷 생성 (또는 s3cmd 사용)
+    # 버킷 이름: kafka-data-bucket
+    BUCKET_NAME="kafka-data-bucket"
+    
+    # AWS CLI가 설치되어 있다면:
+    # aws --endpoint-url=${RGW_ENDPOINT} s3 mb s3://${BUCKET_NAME} \
+    #   --access-key=${ACCESS_KEY} --secret-key=${SECRET_KEY}
+    
+    # 또는 s3cmd 사용:
+    # s3cmd --access_key=${ACCESS_KEY} --secret_key=${SECRET_KEY} \
+    #   --host=${RGW_ENDPOINT} --host-bucket='%(bucket).s3' \
+    #   mb s3://${BUCKET_NAME}
+    
+    echo "Bucket creation command prepared for: ${BUCKET_NAME}"
+

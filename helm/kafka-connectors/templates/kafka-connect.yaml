@@ -56,4 +56,16 @@ spec:
     value.converter: org.apache.kafka.connect.json.JsonConverter
     key.converter.schemas.enable: false
     value.converter.schemas.enable: false
+  {{- if .Values.kafkaConnect.env }}
+  template:
+    connectContainer:
+      env:
+        {{- range .Values.kafkaConnect.env }}
+        - name: {{ .name }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .secretName }}
+              key: {{ .secretKey }}
+        {{- end }}
+  {{- end }}
 

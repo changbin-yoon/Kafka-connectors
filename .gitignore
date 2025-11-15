@@ -1,0 +1,27 @@
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+.DS_Store
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Docker
+*.tar
+
+# IDE
+.classpath
+.project
+.settings/
+

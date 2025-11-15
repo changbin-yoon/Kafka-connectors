@@ -8,6 +8,8 @@ import java.util.Map;
 public class S3SinkConnectorConfig extends AbstractConfig {
     public static final String S3_BUCKET_CONFIG = "s3.bucket";
     public static final String S3_REGION_CONFIG = "s3.region";
+    public static final String S3_ENDPOINT_CONFIG = "s3.endpoint";
+    public static final String S3_PATH_STYLE_ACCESS_CONFIG = "s3.path.style.access";
     public static final String S3_PREFIX_CONFIG = "s3.prefix";
     public static final String AWS_ACCESS_KEY_ID_CONFIG = "aws.access.key.id";
     public static final String AWS_SECRET_ACCESS_KEY_CONFIG = "aws.secret.access.key";
@@ -21,7 +23,11 @@ public class S3SinkConnectorConfig extends AbstractConfig {
             .define(S3_BUCKET_CONFIG, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH,
                     "S3 버킷 이름")
             .define(S3_REGION_CONFIG, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH,
-                    "AWS 리전 (예: ap-northeast-2)")
+                    "AWS 리전 (예: ap-northeast-2, Rook-Ceph의 경우 us-east-1 사용)")
+            .define(S3_ENDPOINT_CONFIG, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM,
+                    "S3 엔드포인트 URL (Rook-Ceph의 경우 http://rook-ceph-rgw-my-store.rook-ceph.svc:80)")
+            .define(S3_PATH_STYLE_ACCESS_CONFIG, ConfigDef.Type.BOOLEAN, true, ConfigDef.Importance.LOW,
+                    "Path-style 접근 사용 여부 (Rook-Ceph의 경우 true)")
             .define(S3_PREFIX_CONFIG, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM,
                     "S3 객체 키 접두사 (예: kafka-data/)")
             .define(AWS_ACCESS_KEY_ID_CONFIG, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH,
@@ -41,6 +47,8 @@ public class S3SinkConnectorConfig extends AbstractConfig {
 
     public final String s3Bucket;
     public final String s3Region;
+    public final String s3Endpoint;
+    public final boolean s3PathStyleAccess;
     public final String s3Prefix;
     public final String awsAccessKeyId;
     public final String awsSecretAccessKey;
@@ -54,6 +62,8 @@ public class S3SinkConnectorConfig extends AbstractConfig {
         super(CONFIG_DEF, props);
         this.s3Bucket = getString(S3_BUCKET_CONFIG);
         this.s3Region = getString(S3_REGION_CONFIG);
+        this.s3Endpoint = getString(S3_ENDPOINT_CONFIG);
+        this.s3PathStyleAccess = getBoolean(S3_PATH_STYLE_ACCESS_CONFIG);
         this.s3Prefix = getString(S3_PREFIX_CONFIG);
         this.awsAccessKeyId = getString(AWS_ACCESS_KEY_ID_CONFIG);
         this.awsSecretAccessKey = getPassword(AWS_SECRET_ACCESS_KEY_CONFIG).value();
