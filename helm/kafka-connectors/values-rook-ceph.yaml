@@ -52,8 +52,19 @@ s3Sink:
       # Rook-Ceph Object Store 설정
       s3.bucket: "kafka-data-bucket"
       s3.region: "us-east-1"  # Rook-Ceph는 리전이 없으므로 임의의 값 사용
-      s3.endpoint: "http://rook-ceph-rgw-my-store.rook-ceph.svc:80"  # 실제 RGW 서비스 이름으로 변경
-      s3.path.style.access: "true"  # Rook-Ceph는 path-style 접근 사용
+      
+      # 엔드포인트 설정 (물리적으로 분리된 클러스터 환경)
+      # 옵션 1: 내부 서비스 사용 (같은 클러스터 내)
+      # s3.endpoint: "http://rook-ceph-rgw-my-store.rook-ceph.svc:80"  # 실제 RGW 서비스 이름으로 변경
+      
+      # 옵션 2: NodePort 사용 (물리적으로 분리된 클러스터)
+      # s3.endpoint: "http://<NODE_IP>:<NODE_PORT>"  # 예: http://192.168.1.100:30080
+      
+      # 옵션 3: Ingress 사용 (물리적으로 분리된 클러스터)
+      # s3.endpoint: "http://ceph-rgw.example.com"  # 실제 Ingress 호스트 이름으로 변경
+      
+      s3.endpoint: "http://rook-ceph-rgw-my-store.rook-ceph.svc:80"  # 위 옵션 중 하나를 사용하세요
+      s3.path.style.access: "true"  # Rook-Ceph는 path-style 접근 사용 (외부 접근 시 필수)
       s3.prefix: "kafka-data"
       # 환경 변수에서 자격 증명 가져오기
       aws.access.key.id: "${ROOK_CEPH_ACCESS_KEY}"

@@ -85,7 +85,30 @@ kubectl get kafkaconnector -n kafka
 kubectl logs -f kafka-connect-cluster-connect-0 -n kafka
 ```
 
+## 6. 물리적으로 분리된 클러스터에서 접근
+
+Ceph 클러스터와 Test 클러스터가 물리적으로 분리되어 있는 경우, NodePort나 Ingress를 통해 접근할 수 있습니다.
+
+자세한 내용은 [EXTERNAL-CEPH-ACCESS.md](./EXTERNAL-CEPH-ACCESS.md)를 참조하세요.
+
+### 빠른 예시 (NodePort 사용)
+
+```bash
+# 1. Ceph 클러스터에서 NodePort 서비스 생성
+kubectl apply -f k8s/rook-ceph-rgw-nodeport.yaml -n rook-ceph
+
+# 2. NodePort 확인
+kubectl get svc rook-ceph-rgw-nodeport -n rook-ceph
+
+# 3. Test 클러스터에서 스크립트 실행 (외부 엔드포인트 지정)
+EXTERNAL_RGW_ENDPOINT="<NODE_IP>:<NODE_PORT>" ./scripts/setup-rook-ceph-s3.sh
+
+# 4. Helm values 파일에서 endpoint 수정
+# s3.endpoint: "http://<NODE_IP>:<NODE_PORT>"
+```
+
 ## 상세 가이드
 
-더 자세한 내용은 [ROOK-CEPH-SETUP.md](./ROOK-CEPH-SETUP.md)를 참조하세요.
+- 물리적으로 분리된 클러스터 접근: [EXTERNAL-CEPH-ACCESS.md](./EXTERNAL-CEPH-ACCESS.md)
+- 더 자세한 내용은 [ROOK-CEPH-SETUP.md](./ROOK-CEPH-SETUP.md)를 참조하세요.
 
