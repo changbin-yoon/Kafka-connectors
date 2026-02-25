@@ -1,0 +1,38 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: postgres-sink-connector
+  namespace: default
+  labels:
+    # KafkaConnect CR의 이름과 동일해야 이 커넥터가 해당 클러스터에 배포됩니다.
+    strimzi.io/cluster: my-connect-cluster
+spec:
+  class: io.confluent.connect.jdbc.JdbcSinkConnector
+  tasksMax: 1
+  config:
+    # 대상 Kafka 토픽 이름 콤마로 다중 설정 가능 (해당 토픽의 데이터를 가져옴)
+    topics: "user-events"
+    
+    # PostgreSQL 접속 정보
+    connection.url: "jdbc:postgresql://<postgres-host>:5432/<dbname>"
+    connection.user: "postgres_user"
+    connection.password: "postgres_password"
+    
+    # [Target 테이블 전략]
+    # ${topic}이 실제 Kafka 토픽명으로 치환됩니다. (e.g., kafka_user-events 테이블 탐색)
+    table.name.format: "kafka_${topic}"
+    
+    # [Insert 전략]
+    # insert: 단순 추가 (에러 시 중단)
+    # upsert: 있으면 업데이트, 없으면 추가 (pk.mode 설정 필수)
+    insert.mode: "insert"
+    
+    # [스키마 관련]
+    auto.create: true  # DB에 테이블이 없으면 Kafka Value의 Schema 구조를 기반으로 자동 생성
+    auto.evolve: true  # Kafka Schema에 새로운 필드가 생기곗 DB 컬럼 구조도 자동 변경(추가)
+    
+    # [Primary Key 설정 방안]
+    # Kafka 레코드 Value 안에 들어있는 필드를 PK로 삼을 경우:
+    # pk.mode: "record_value"
+    # pk.fields: "id"
+    pk.mode: "none"

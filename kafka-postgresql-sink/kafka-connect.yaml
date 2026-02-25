@@ -1,0 +1,43 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-connect-cluster
+  namespace: default
+  annotations:
+    # Strimzi가 KafkaConnector CR 리소스를 인식하도록 활성화
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 4.0.0
+  replicas: 1
+  # 본인 환경의 Kafka Bootstrap 주소로 변경
+  bootstrapServers: "my-cluster-kafka-bootstrap:9092" 
+  
+  # --- [옵션 1] Dockerfile을 직접 빌드하여 레지스트리에 푸시한 이미지를 사용할 경우 ---
+  # image: <your-docker-registry>/connect-jdbc-postgres:latest
+  
+  # --- [옵션 2] Strimzi Build 기능을 사용하여 자동으로 플러그인을 다운로드/빌드할 경우 ---
+  # 주의: 이 기능을 사용하려면 컨테이너 레지스트리(Push 가능)가 필요합니다.
+  build:
+    output:
+      type: docker
+      image: <your-docker-registry>/connect-jdbc-postgres:latest # 본인의 레지스트리 경로
+      # pushSecret: my-registry-credentials # Private 레지스트리인 경우 시크릿 연결 (옵션)
+    plugins:
+      - name: jdbc-sink-plugin
+        artifacts:
+          - type: zip
+            url: https://packages.confluent.io/archive/7.5/confluentinc-kafka-connect-jdbc-10.7.4.zip
+          - type: jar
+            url: https://repo1.maven.org/maven2/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar
+
+  config:
+    group.id: connect-cluster
+    offset.storage.topic: connect-cluster-offsets
+    config.storage.topic: connect-cluster-configs
+    status.storage.topic: connect-cluster-status
+    
+    # Kafka Message Payload Converter (JSON 사용 예시. Schema Registry 적용 시 Avro 포맷으로 변경 가능)
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: true
+    value.converter.schemas.enable: true
